@@ -5,6 +5,7 @@
 import os
 import pymysql.cursors
 
+
 db_host = os.environ['DB_HOST']
 db_username = os.environ['DB_USER']
 db_password = os.environ['DB_PASSWORD']
@@ -33,11 +34,13 @@ def response_message(msg):
       db_conn = connect()
       if db_conn:
         parse_msg = msg.split("|");
+        if "allbook" == parse_msg[0]:
+            response = all_book(db_conn)
        
         #business problem 1
-        if "stock" == parse_msg[0]: 
+        elif "stock" == parse_msg[0]:    
             response = book_stock(parse_msg[1],db_conn)
-
+     
         #business problem 2
         elif "comment" == parse_msg[0]:
             response = book_comment(parse_msg[1],parse_msg[2],db_conn)
@@ -76,10 +79,20 @@ def book_stock(title,db_conn):
   for key,values in result.items():
     return values
 
-  
+def all_book(db_conn):
+  print("hello")
+  cursor = db_conn.cursor()
+  print("hello")
+  select_query = """SELECT book_title  FROM book"""
+  cursor.execute(select_query)
+  db_conn.commit()
+  result = cursor.fetchall()
+  title = []
+  for i in range(len(result)):
+    title.append(result[i]['book_title'])
+  return title
 
 def book_comment (title,comment, db_conn):
-
   cursor = db_conn.cursor();
   select_query = """SELECT book_ISBN  FROM book WHERE book_title =%s"""
   cursor.execute(select_query,(title,))
@@ -95,55 +108,69 @@ def book_comment (title,comment, db_conn):
   display_query = """SELECT review_comments FROM Reviews where book_id =%s"""
   cursor.execute(display_query,(book_id,))
   result_display = cursor.fetchone()
-  db_conn.commit();
-  for key,values in result_display.items():
-    return "Your comment '"+ values+" '- saved in Database"
-  
+  if result_display:
+    db_conn.commit();
+    for key,values in result_display.items():
+        return "Your comment '"+ values+" '- saved in Database"
+  else:
+    return "Please enter valid book";
 
 def book_penalty_rent(state,book_genre, db_conn):
-  
   cursor = db_conn.cursor();
-  rent_query = """SELECT DISTINCT user.user_name AS "Username", account.account_penalty AS "penalty", book.book_genre AS "genre", Address.state AS "state" FROM user, account, book, Address 
+  rent_query = """SELECT DISTINCT user.user_name AS "Username", account.account_penalty AS "penalty", book.book_genre AS "genre", Address.state AS "state",
+  CONCAT('Username: ',user_name,'  ,Penalty: ',account_penalty,'  ,Genre: ',book_genre, '  ,State: ',state) AS users_penalty FROM user, account, book, Address 
   WHERE user.user_id = account.account_id AND book.book_genre = %s AND Address.state = %s;"""
   cursor.execute(rent_query,(book_genre,state))
   db_conn.commit()
   result = cursor.fetchall()
-  return result
+  title = []
+  for i in range(len(result)):
+    title.append(result[i]['users_penalty'])
+   
+  return title
+
+  
         
 
 def user_expdate(db_conn):
   cursor = db_conn.cursor();
-  count_query = """ SELECT DISTINCT user.user_name AS "User", account.account_expdate AS "Expiration Date" FROM user, account 
-  WHERE user.user_id = account.user_id 
-  HAVING DATE(account.account_expdate) < curdate()"""
+  count_query = """  SELECT user_name,account_expdate, concat('Username: ',user_name,' , ','Expiration date: ',account_expdate) AS users_expdate FROM user,account WHERE user.user_id = account.user_id HAVING DATE(account.account_expdate) < curdate();  """
   cursor.execute(count_query)
   db_conn.commit()
   result = cursor.fetchall()
-  return result
-
+  title = []
+  for i in range(len(result)):
+    title.append(result[i]['users_expdate'])
+  return title
 
 def reviews_range(start_date,end_date,db_conn):
   cursor = db_conn.cursor();
-  reviews_date_query = """SELECT book.book_title, Reviews.review_timestamp AS "TIME" FROM book, Reviews 
-  WHERE book.book_ISBN = Reviews.book_id 
-  HAVING date(Reviews.review_timestamp) BETWEEN date(%s) AND date(%s)"""
+  reviews_date_query = """SELECT book_title, review_timestamp,review_comments,CONCAT('Title: ',book_title,'  ,Time: ',date(review_timestamp),'  ,Comments: ',review_comments) AS reviews_range FROM book, Reviews 
+  WHERE book_ISBN = Reviews.book_id HAVING date(review_timestamp)BETWEEN date(%s) AND date(%s);"""
   cursor.execute(reviews_date_query,(start_date,end_date))
   db_conn.commit()
   result = cursor.fetchall()
-  return result
+  title = []
+  for i in range(len(result)):
+    title.append(result[i]['reviews_range'])
+  return title
 
 
 def reservation_range(state, start_Date,end_date,db_conn):
   cursor = db_conn.cursor();
-  count_query = """SELECT DISTINCT user.user_name AS "User Name",  Address.state AS "State", book.book_title AS "Book Title", reservation.reservation_startdate AS "reservation start", reservation.reservation_enddate AS "reservation end" 
+  count_query = """SELECT DISTINCT user.user_name AS "User Name",  Address.state AS "State", book.book_title AS "Book Title", reservation.reservation_startdate AS "reservation start", reservation.reservation_enddate AS "reservation end",
+  CONCAT('Username: ',user_name,'  ,','State: ',state, '  ,','Book Title: ',book_title,'  ,','Reservation Start:',reservation_startdate,'  ,','Reservation End:',reservation_enddate) AS state_reservation 
   FROM user,Address,book,reservation 
-  JOIN book b1 ON b1.book_ISBN = reservation.book_isbn
   WHERE Address.state = %s
   HAVING reservation.reservation_startdate BETWEEN %s AND %s"""
   cursor.execute(count_query,(state,start_Date,end_date))
   db_conn.commit()
   result = cursor.fetchall()
-  return result
+  title = []
+  for i in range(len(result)):
+    title.append(result[i]['state_reservation'])
+  return title
+  
 
 def employee_salary(dept_name,salary,db_conn):
   cursor = db_conn.cursor();
@@ -156,8 +183,11 @@ def employee_salary(dept_name,salary,db_conn):
   HAVING payroll.employee_salary> %s """
   cursor.execute(count_query,(dept_name,salary,))
   db_conn.commit()
-  result = cursor.fetchone()
-  return result
+  result = cursor.fetchall()
+  title = []
+  for i in range(len(result)):
+    title.append(result[i]['Employee'])
+  return title
 
 
 

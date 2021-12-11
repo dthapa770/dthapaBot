@@ -55,10 +55,11 @@ async def on_message(message):
         else:
           response = db.response_message(msg)
     if response:
+        for i in range(len(response)):
         # bot sends response to the Discord API and the response is show
         # on the channel from your Discord server that triggered this method.
-        embed = discord.Embed(description=response)
-        await message.channel.send(embed=embed)
+          embed = discord.Embed(description=response[i])
+          await message.channel.send(embed=embed)
 
 
 try:
