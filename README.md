@@ -11,15 +11,15 @@ stock|"Book Title"
 
 penalty|"state"|"genre"
 
-rent out frequency //not implemented
-
 account expiration date
 
 reviews|YYYY-MM-DD|YYYY-MM-DD
 
 reservation|"state"|YYYY-MM-DD|YYYY-MM-DD
 
-find user total sale //not implemented
+employee|"department name"|"amount of salary" 
+
+
 
 #Business Requirements:
 
@@ -29,12 +29,12 @@ Make a comment review for a book
 
 For each user in California, find all the total amount of fees they had to pay for late returned books in the genre of Technology
 
-For each book, find the total number of frequencies they are rented out //not implemented
-
 Find the users whose account whose account has expired .
 
 Find the number of users who made reviews within a specified date range.
 
 For each user in California, find the books they reserved within a specified date range.
 
-For each user find total number of sales they made using the payment method associated with them. // not implemented
+Find employee in the specific department with salary higher than specific amount 
+
+
